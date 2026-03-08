@@ -5,6 +5,8 @@ LLM_MODEL='gemini-2.0-flash'
 GOOGLE_SHEET_ID=''
 SHEET_NAME=Sheet1
 TELEGRAM_BOT_TOKEN=''
+TELEGRAM_CHAT_ID=''
+
 
 # Optional: for OpenAI-compatible providers
 # LLM_PROVIDER=openai

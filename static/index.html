@@ -52,17 +52,37 @@
                     <i class="ph ph-trend-up"></i>
                     <span>Trends</span>
                 </a>
-                <a href="/jobs" class="nav-item" data-route="jobs" data-link>
-                    <i class="ph ph-calendar-check"></i>
-                    <span>Jobs</span>
-                </a>
             </nav>
 
             <div class="sidebar-footer">
-                <a href="/settings" class="nav-item" data-route="settings" data-link>
-                    <i class="ph ph-gear"></i>
-                    <span>Settings</span>
-                </a>
+                <!-- Tasks -->
+                <div class="nav-section">
+                    <h3 class="nav-header">Jobs</h3>
+                    <a href="/jobs" class="nav-item" data-link>
+                        <i class="ph ph-robot"></i>
+                        <span>Automated Jobs</span>
+                    </a>
+                </div>
+
+                <!-- AI Studio -->
+                <div class="nav-section">
+                    <h3 class="nav-header">AI Content</h3>
+                    <a href="/studio" class="nav-item" data-link>
+                        <i class="ph ph-lightbulb"></i>
+                        <span>Content Studio</span>
+                        <span class="badge"
+                            style="margin-left:auto; background:var(--accent-primary); font-size:10px;">PRO</span>
+                    </a>
+                </div>
+
+                <!-- Config -->
+                <div class="nav-section">
+                    <h3 class="nav-header">Config</h3>
+                    <a href="/settings" class="nav-item" data-link>
+                        <i class="ph ph-sliders"></i>
+                        <span>Settings</span>
+                    </a>
+                </div>
             </div>
         </aside>
 
@@ -89,9 +109,9 @@
     </div>
 
     <!-- Scripts -->
-    <script src="/js/video_card.js"></script>
-    <script src="/js/chart_widgets.js"></script>
-    <script src="/js/router.js"></script>
+    <script src="/js/video_card.js?v=2"></script>
+    <script src="/js/chart_widgets.js?v=2"></script>
+    <script src="/js/router.js?v=4"></script>
 </body>
 
 </html>

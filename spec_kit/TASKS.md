@@ -617,7 +617,7 @@ def send_job_complete(job_name: str, count: int, top_video: dict) -> bool
 ### TASK-19 · دعم متعدد اللغات
 **الأولوية**: 🔵 Low  
 **الحجم**: S  
-**الحالة**: `[ ] Todo`
+**الحالة**: `[x] Done`
 
 #### الملفات المطلوبة
 | الإجراء | الملف |
@@ -626,9 +626,9 @@ def send_job_complete(job_name: str, count: int, top_video: dict) -> bool
 | تعديل | `execution/get_transcript.py` — محاولة جلب transcript عربي أولاً |
 
 #### معايير القبول
-- [ ] فيديو عربي → ملخص وملاحظات بالعربية
-- [ ] فيديو إنجليزي → ملخص بالإنجليزية
-- [ ] لغة الـ response تُكتب في قاعدة البيانات كحقل `response_language`
+- [x] فيديو عربي → ملخص وملاحظات بالعربية
+- [x] فيديو إنجليزي → ملخص بالإنجليزية
+- [x] لغة الـ response تُكتب في قاعدة البيانات كحقل `response_language`
 
 #### التبعيات
 - TASK-05
@@ -667,7 +667,7 @@ faiss-cpu OR chromadb  # vector similarity search
 ### TASK-21 · Script Generator متكامل
 **الأولوية**: 🔵 Low  
 **الحجم**: M  
-**الحالة**: `[ ] Todo`
+**الحالة**: `[x] Done`
 
 #### الملفات المطلوبة
 | الإجراء | الملف |
@@ -676,9 +676,9 @@ faiss-cpu OR chromadb  # vector similarity search
 | تعديل | `app.py` — إضافة `POST /api/script-outline` |
 
 #### معايير القبول
-- [ ] يُولّد: Hook (30 ثانية) → Intro (2 دقيقة) → Main Points → CTA
-- [ ] مدة مقترحة لكل قسم
-- [ ] مبني على hooks وCTAs من أفضل فيديوهات النيش في DB
+- [x] يُولّد: Hook (30 ثانية) → Intro (2 دقيقة) → Main Points → CTA
+- [x] مدة مقترحة لكل قسم
+- [x] مبني على hooks وCTAs من أفضل فيديوهات النيش في DB
 
 #### التبعيات
 - TASK-05, TASK-18, TASK-01

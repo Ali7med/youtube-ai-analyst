@@ -191,7 +191,7 @@ window.initResearch = async function () {
 
 window.exportData = async function (searchId, type) {
     try {
-        const resp = await fetch(`/ api /export/${type}`, {
+        const resp = await fetch(`/api/export/${type}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ search_id: searchId })
@@ -200,11 +200,22 @@ window.exportData = async function (searchId, type) {
         if (!resp.ok) throw new Error("Export failed");
 
         const blob = await resp.blob();
+        let filename = `research_${searchId}_${new Date().getTime()}.${type === 'markdown' ? 'md' : type}`;
+
+        const disposition = resp.headers.get('Content-Disposition');
+        if (disposition && disposition.includes('attachment')) {
+            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+            const matches = filenameRegex.exec(disposition);
+            if (matches != null && matches[1]) {
+                filename = matches[1].replace(/['"]/g, '');
+            }
+        }
+
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `research_${searchId}_${new Date().getTime()}.${type === 'markdown' ? 'md' : type}`;
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -221,6 +232,7 @@ const routes = [
     { path: '/channels', template: '/pages/channels.html', title: 'Competitor Analysis' },
     { path: '/trends', template: '/pages/trends.html', title: 'Trend Radar' },
     { path: '/jobs', template: '/pages/jobs.html', title: 'Automated Jobs' },
+    { path: '/studio', template: '/pages/studio.html', title: 'Content Studio' },
     { path: '/settings', template: '/pages/settings.html', title: 'Settings' }
 ];
 

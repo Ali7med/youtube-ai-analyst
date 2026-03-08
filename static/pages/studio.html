@@ -1,0 +1,219 @@
+<div class="glass-panel animate-in" style="padding: 24px; min-height: calc(100vh - 80px);">
+    <!-- Header -->
+    <div
+        style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px;">
+        <div style="display:flex; align-items:center; gap: 16px;">
+            <div
+                style="background:var(--accent-primary); width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:24px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
+                <i class="ph ph-lightbulb"></i>
+            </div>
+            <div>
+                <h1 style="font-size:24px; font-weight:700; margin:0; color:var(--text-primary);">Content Studio</h1>
+                <p class="text-secondary" style="margin:4px 0 0 0; font-size:14px;">Generate high-performing ideas and
+                    scripts using your database</p>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr; gap: 40px;">
+
+        <!-- Video Ideas Section -->
+        <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+                <h2 style="font-size: 18px; margin:0; display:flex; align-items:center; gap:8px;">
+                    <i class="ph ph-sparkle" style="color:var(--accent-warning);"></i> Viral Video Ideas
+                </h2>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <select id="idea-limit"
+                        style="border-radius:8px; padding:8px 12px; background:var(--bg-glass); border:1px solid var(--border-color); color:var(--text-primary);">
+                        <option value="3">3 Ideas</option>
+                        <option value="5" selected>5 Ideas</option>
+                        <option value="10">10 Ideas</option>
+                    </select>
+                    <button class="btn primary" onclick="generateIdeas()" id="btn-generate-ideas"
+                        style="padding: 8px 16px; border-radius: 8px; font-size: 14px;">
+                        <i class="ph ph-magic-wand"></i> Generate
+                    </button>
+                </div>
+            </div>
+
+            <div id="ideas-container"
+                style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                <div
+                    style="grid-column: 1 / -1; padding:40px; text-align:center; background:var(--bg-glass); border-radius:16px; border:1px dashed var(--border-color);">
+                    <i class="ph ph-lightbulb" style="font-size:48px; color:var(--text-muted); margin-bottom:16px;"></i>
+                    <h3 style="margin:0 0 8px 0; font-size:16px;">No Ideas Yet</h3>
+                    <p style="margin:0; font-size:14px; color:var(--text-secondary);">Click generate to discover viral
+                        content ideas based on your highest-rated videos.</p>
+                </div>
+            </div>
+        </div>
+
+        <hr style="border:0; border-top:1px dashed var(--border-color); margin:0;">
+
+        <!-- Script Generator Section -->
+        <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+                <h2 style="font-size: 18px; margin:0; display:flex; align-items:center; gap:8px;">
+                    <i class="ph ph-article" style="color:var(--accent-primary);"></i> Smart Script Builder
+                </h2>
+            </div>
+
+            <div class="glass-panel"
+                style="padding:24px; border:1px solid var(--border-color); border-radius:16px; margin-bottom: 24px;">
+                <form id="script-form" style="display:flex; gap:16px; align-items:flex-end;">
+                    <div class="input-group" style="flex:1; margin:0;">
+                        <label style="font-size:13px; font-weight:600; color:var(--text-secondary);">Video Topic /
+                            Niche</label>
+                        <input type="text" id="script-topic" required
+                            placeholder="e.g. How to use ChatGPT for programming"
+                            style="border-radius:8px; padding:12px 16px; background:var(--bg-glass);">
+                    </div>
+                    <button type="submit" id="btn-generate-script" class="btn primary"
+                        style="padding: 12px 24px; border-radius: 8px; font-size: 15px; height:max-content;">
+                        <i class="ph ph-pen-nib"></i> Build Outline
+                    </button>
+                </form>
+            </div>
+
+            <div id="script-container"
+                style="display:none; background:var(--bg-card); border-radius:16px; border:1px solid var(--border-color); overflow:hidden;">
+                <!-- Script output will be injected here -->
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    async function generateIdeas() {
+        const btn = document.getElementById('btn-generate-ideas');
+        const container = document.getElementById('ideas-container');
+        const limit = document.getElementById('idea-limit').value;
+
+        const ogText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Generating...';
+        btn.disabled = true;
+
+        try {
+            const resp = await fetch('/api/ideas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limit: parseInt(limit) })
+            });
+            const data = await resp.json();
+
+            if (data.error) throw new Error(data.error);
+            const ideas = data.ideas || [];
+
+            if (!ideas.length) {
+                container.innerHTML = '<div style="grid-column: 1 / -1; padding:20px; color:var(--text-secondary);">No ideas could be generated. Ensure you have top-rated videos in your database.</div>';
+                return;
+            }
+
+            container.innerHTML = ideas.map((idea, i) => `
+                <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:16px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05); display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                        <span style="background:rgba(234, 179, 8, 0.1); color:var(--accent-warning); padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700;">Idea #${i + 1}</span>
+                        <span style="font-size:12px; font-weight:600; color:var(--accent-success); display:flex; align-items:center; gap:4px;"><i class="ph ph-trend-up"></i> ${idea.success_probability || 'High'}</span>
+                    </div>
+                    <h3 style="margin:0 0 12px 0; font-size:16px; font-weight:700; color:var(--text-primary); line-height:1.4;">${idea.title}</h3>
+                    <p style="margin:0 0 16px 0; font-size:14px; color:var(--text-secondary); line-height:1.5; flex:1;">
+                        <strong style="color:var(--text-primary);">Hook:</strong> ${idea.hook}
+                    </p>
+                    <div style="padding-top:12px; border-top:1px solid var(--border-color); font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
+                        <i class="ph ph-users"></i> ${idea.target_audience}
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (e) {
+            container.innerHTML = `<div style="grid-column: 1 / -1; padding:20px; color:var(--accent-danger);">Error: ${e.message}</div>`;
+        } finally {
+            btn.innerHTML = ogText;
+            btn.disabled = false;
+        }
+    }
+
+    document.getElementById('script-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const topic = document.getElementById('script-topic').value;
+        const btn = document.getElementById('btn-generate-script');
+        const container = document.getElementById('script-container');
+
+        const ogText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Building...';
+        btn.disabled = true;
+
+        container.style.display = 'block';
+        container.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-secondary);"><i class="ph ph-spinner ph-spin" style="font-size:32px; margin-bottom:16px;"></i><br>Analyzing top videos and drafting your outline...</div>';
+
+        try {
+            const resp = await fetch('/api/script-outline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic: topic })
+            });
+            const data = await resp.json();
+
+            if (data.error) throw new Error(data.error);
+
+            let html = `
+                <div style="background:rgba(99, 102, 241, 0.05); padding:24px; border-bottom:1px solid var(--border-color);">
+                    <h3 style="margin:0 0 16px 0; font-size:16px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+                        <i class="ph ph-text-t"></i> Auto-Generated Titles
+                    </h3>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        ${data.title_ideas.map(t => `
+                            <div style="background:var(--bg-glass); padding:10px 16px; border-radius:8px; border:1px solid var(--border-color); font-weight:600; font-size:15px; color:var(--text-primary);">
+                                ${t}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div style="padding:24px;">
+                    <h3 style="margin:0 0 24px 0; font-size:16px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+                        <i class="ph ph-list-numbers"></i> Video Outline Structure
+                    </h3>
+                    <div style="display:flex; flex-direction:column; gap:20px; position:relative;">
+                        <div style="position:absolute; left:24px; top:20px; bottom:20px; width:2px; background:var(--border-color); z-index:0;"></div>
+            `;
+
+            data.outline.forEach((section, i) => {
+                let icon = 'ph-check-circle';
+                let color = 'var(--accent-primary)';
+                if (section.section.toLowerCase().includes('hook')) { icon = 'ph-fish-hook'; color = 'var(--accent-warning)'; }
+                if (section.section.toLowerCase().includes('cta') || section.section.toLowerCase().includes('action')) { icon = 'ph-megaphone'; color = 'var(--accent-danger)'; }
+
+                html += `
+                    <div style="display:flex; gap:20px; position:relative; z-index:1;">
+                        <div style="width:48px; height:48px; border-radius:50%; background:var(--bg-card); border:2px solid ${color}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="ph ${icon}" style="font-size:20px; color:${color};"></i>
+                        </div>
+                        <div style="flex:1; background:var(--bg-glass); border:1px solid var(--border-color); border-radius:12px; padding:16px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <h4 style="margin:0; font-size:15px; color:${color};">${section.section}</h4>
+                                <span style="font-size:12px; font-weight:600; font-family:var(--font-mono); color:var(--text-secondary); background:var(--bg-card); padding:2px 8px; border-radius:4px; border:1px solid var(--border-color);">
+                                    <i class="ph ph-clock"></i> ${section.suggested_duration}
+                                </span>
+                            </div>
+                            <p style="margin:0; font-size:14px; color:var(--text-primary); line-height:1.6;">${section.content}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        } catch (e) {
+            container.innerHTML = `<div style="padding:20px; color:var(--accent-danger); text-align:center;"><i class="ph ph-warningCircle"></i> Error: ${e.message}</div>`;
+        } finally {
+            btn.innerHTML = ogText;
+            btn.disabled = false;
+        }
+    });
+
+</script>

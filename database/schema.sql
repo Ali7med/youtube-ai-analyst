@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS videos (
   topics TEXT, channel_id TEXT, published_at TEXT,
   duration TEXT, hook TEXT, cta TEXT,
   target_audience TEXT, content_gap TEXT,
+  response_language TEXT,
   processed_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

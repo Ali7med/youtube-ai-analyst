@@ -124,13 +124,13 @@ def export_data(format):
     
     if format == "csv":
         csv_data = report_generator.export_csv(vids)
-        return Response(csv_data, mimetype="text/csv", headers={"Content-Disposition": f"attachment;filename=research_{search_id}.csv"})
+        return Response(csv_data, mimetype="text/csv", headers={"Content-Disposition": f'attachment; filename="research_{search_id}.csv"'})
     elif format == "markdown":
         md_data = report_generator.export_markdown(vids, title=f"Research Report #{search_id}")
-        return Response(md_data, mimetype="text/markdown", headers={"Content-Disposition": f"attachment;filename=research_{search_id}.md"})
+        return Response(md_data, mimetype="text/markdown", headers={"Content-Disposition": f'attachment; filename="research_{search_id}.md"'})
     elif format == "json":
         json_data = report_generator.export_json(vids)
-        return Response(json_data, mimetype="application/json", headers={"Content-Disposition": f"attachment;filename=research_{search_id}.json"})
+        return Response(json_data, mimetype="application/json", headers={"Content-Disposition": f'attachment; filename="research_{search_id}.json"'})
     else:
         return jsonify({"error": "Unsupported format"}), 400
 
@@ -250,6 +250,18 @@ def delete_watchlist_api(item_id):
     try:
         db_manager.delete_from_watchlist(item_id)
         return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/script-outline", methods=["POST"])
+def script_outline_api():
+    data = request.json
+    topic = data.get("topic", "")
+    if not topic:
+        return jsonify({"error": "Topic required"}), 400
+    try:
+        from execution.script_generator import generate_script_outline
+        return jsonify(generate_script_outline(topic))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

@@ -39,8 +39,8 @@ def save_video(row: dict, search_id: int):
         cursor = conn.cursor()
         cursor.execute(
             """INSERT OR REPLACE INTO videos 
-               (video_id, search_id, title, summary, notes, thumbnail, rate, label, link, views, likes, comments, sentiment, topics, duration, hook, cta, target_audience, content_gap) 
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               (video_id, search_id, title, summary, notes, thumbnail, rate, label, link, views, likes, comments, sentiment, topics, duration, hook, cta, target_audience, content_gap, response_language) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 video_id,
                 search_id,
@@ -60,7 +60,8 @@ def save_video(row: dict, search_id: int):
                 row.get("hook", ""),
                 row.get("cta", ""),
                 row.get("target_audience", ""),
-                row.get("content_gap", "")
+                row.get("content_gap", ""),
+                row.get("response_language", "")
             )
         )
         conn.commit()

@@ -26,21 +26,24 @@ Analyze the following YouTube video transcript and return a structured JSON resp
 
 Return ONLY valid JSON with these exact keys:
 {
-  "summary": "A concise 2-3 sentence summary of the video in the same language as the transcript",
-  "notes": "3-5 key bullet points starting with '• '",
-  "topics": ["topic1", "topic2"],
+  "summary": "A concise 2-3 sentence summary of the video in the same language as the transcript (CRITICAL)",
+  "notes": "3-5 key bullet points starting with '• ' (in the same language as the transcript)",
+  "topics": ["theme1", "theme2", "theme3"],
   "sentiment": "positive | neutral | negative",
   "content_type": "tutorial | review | news | discussion | entertainment | other",
-  "hook": "The opening hook that grabbed attention",
-  "cta": "The call to action at the end",
-  "target_audience": "1 sentence description of the target audience",
-  "content_gap": "What the video missed or should have covered"
+  "hook": "The opening hook that grabbed attention (in transcript language)",
+  "cta": "The call to action at the end (in transcript language)",
+  "target_audience": "1 sentence description of the target audience (in transcript language)",
+  "content_gap": "What the video missed or should have covered (in transcript language)",
+  "response_language": "The 2-letter code of the transcript language you detected (e.g. ar, en)"
 }
 
 IMPORTANT:
-- Return ONLY JSON, no markdown code fences, no extra text
+- Return ONLY JSON, no extra text
 - Keep summary concise and informative
 - Notes should capture the most valuable insights
+- Topics MUST contain at least 3 keywords or main themes
+- Write the summary, target audience, hook, and cta in the video's original language
 """
 
 
@@ -178,6 +181,7 @@ def _empty_result(reason: str) -> dict:
         "cta": "",
         "target_audience": "",
         "content_gap": "",
+        "response_language": "unknown",
         "_error": reason,
     }
 

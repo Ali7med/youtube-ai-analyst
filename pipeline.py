@@ -107,7 +107,7 @@ def process_video(video: dict, dry_run: bool = False, search_id: int = None) -> 
         "likes": video.get("like_count", 0),
         "duration": video.get("duration", ""),
         "sentiment": summary.get("sentiment", "neutral"),
-        "topics": ", ".join(summary.get("topics", [])),
+        "topics": ", ".join(summary.get("topics", [])) if isinstance(summary.get("topics", []), list) else str(summary.get("topics", "")),
         "hook": summary.get("hook", ""),
         "cta": summary.get("cta", ""),
         "target_audience": summary.get("target_audience", ""),
