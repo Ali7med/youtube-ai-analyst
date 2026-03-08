@@ -1,0 +1,12 @@
+YOUTUBE_API_KEY=''
+LLM_API_KEY=''
+LLM_PROVIDER='gemini'
+LLM_MODEL='gemini-2.0-flash'
+GOOGLE_SHEET_ID=''
+SHEET_NAME=Sheet1
+TELEGRAM_BOT_TOKEN=''
+
+# Optional: for OpenAI-compatible providers
+# LLM_PROVIDER=openai
+# LLM_MODEL=gpt-4o-mini
+# OPENAI_BASE_URL=https://api.openai.com/v1

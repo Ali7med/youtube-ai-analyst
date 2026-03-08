@@ -1,0 +1,86 @@
+<div class="glass-panel animate-in" style="padding: 24px;">
+    <h2>API Configurations</h2>
+    <p class="text-secondary">Configure your access keys for YouTube and LLM providers.</p>
+
+    <form id="config-form" style="margin-top: 24px; max-width: 600px;">
+        <div class="input-group">
+            <label>YouTube Data API Key</label>
+            <input type="password" id="YOUTUBE_API_KEY" placeholder="AIzaSy...">
+        </div>
+
+        <div class="input-group">
+            <label>LLM Provider</label>
+            <select id="LLM_PROVIDER">
+                <option value="gemini">Google Gemini</option>
+                <option value="openai">OpenAI</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>LLM Model</label>
+            <input type="text" id="LLM_MODEL" placeholder="gemini-2.0-flash">
+        </div>
+
+        <div class="input-group">
+            <label>LLM API Key</label>
+            <input type="password" id="LLM_API_KEY" placeholder="Your API Key...">
+        </div>
+
+        <hr style="border-color:var(--border-color); margin: 24px 0;">
+
+        <div class="input-group">
+            <label>Google Sheet ID</label>
+            <input type="text" id="GOOGLE_SHEET_ID" placeholder="1BxiMVs0XRYFgCE_...">
+        </div>
+
+        <div class="input-group">
+            <label>Telegram Bot Token</label>
+            <input type="password" id="TELEGRAM_BOT_TOKEN" placeholder="123456789:ABCdefGHI...">
+        </div>
+
+        <div class="input-group">
+            <label>Telegram Chat ID</label>
+            <input type="text" id="TELEGRAM_CHAT_ID" placeholder="123456789">
+        </div>
+
+        <button type="submit" class="btn primary">Save Configuration</button>
+        <div id="save-msg" style="color:var(--accent-success); margin-top:12px; display:none;">Configurations saved
+            successfully!</div>
+    </form>
+</div>
+<script>
+    // Load config
+    fetch('/api/config')
+        .then(res => res.json())
+        .then(data => {
+            const keys = ['YOUTUBE_API_KEY', 'LLM_PROVIDER', 'LLM_MODEL', 'LLM_API_KEY', 'GOOGLE_SHEET_ID', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'];
+            keys.forEach(k => {
+                const el = document.getElementById(k);
+                if (el && data[k]) {
+                    el.value = data[k];
+                }
+            });
+        });
+
+    document.getElementById('config-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const payload = {};
+        const keys = ['YOUTUBE_API_KEY', 'LLM_PROVIDER', 'LLM_MODEL', 'LLM_API_KEY', 'GOOGLE_SHEET_ID', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'];
+        keys.forEach(k => {
+            const val = document.getElementById(k).value;
+            if (val) payload[k] = val;
+        });
+
+        const res = await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            const msg = document.getElementById('save-msg');
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 3000);
+        }
+    });
+</script>

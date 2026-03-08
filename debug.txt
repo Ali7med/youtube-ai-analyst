@@ -1,0 +1,80 @@
+[summarize] Sending to LLM (gemini/gemini-2.0-flash)...
+[summarize] Attempt 1 failed: 400 Client Error: Bad Request for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=ea7c2efc3cb047579d8de33604cf0be0.Tc6aayYYLx5A28qfpTdbmhUl Response: {
+  "error": {
+    "code": 400,
+    "message": "API key not valid. Please pass a valid API key.",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "API_KEY_INVALID",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "generativelanguage.googleapis.com"
+        }
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.LocalizedMessage",
+        "locale": "en-US",
+        "message": "API key not valid. Please pass a valid API key."
+      }
+    ]
+  }
+}
+
+[summarize] Attempt 2 failed: 400 Client Error: Bad Request for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=ea7c2efc3cb047579d8de33604cf0be0.Tc6aayYYLx5A28qfpTdbmhUl Response: {
+  "error": {
+    "code": 400,
+    "message": "API key not valid. Please pass a valid API key.",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "API_KEY_INVALID",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "generativelanguage.googleapis.com"
+        }
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.LocalizedMessage",
+        "locale": "en-US",
+        "message": "API key not valid. Please pass a valid API key."
+      }
+    ]
+  }
+}
+
+[summarize] Attempt 3 failed: 400 Client Error: Bad Request for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=ea7c2efc3cb047579d8de33604cf0be0.Tc6aayYYLx5A28qfpTdbmhUl Response: {
+  "error": {
+    "code": 400,
+    "message": "API key not valid. Please pass a valid API key.",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "API_KEY_INVALID",
+        "domain": "googleapis.com",
+        "metadata": {
+          "service": "generativelanguage.googleapis.com"
+        }
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.LocalizedMessage",
+        "locale": "en-US",
+        "message": "API key not valid. Please pass a valid API key."
+      }
+    ]
+  }
+}
+
+Traceback (most recent call last):
+  File "D:\Apps\Agents\youtube\execution\summarize_transcript.py", line 214, in <module>
+    result = summarize_transcript(transcript_text, args.title)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Apps\Agents\youtube\execution\summarize_transcript.py", line 74, in summarize_transcript
+    raw_response = _call_llm(user_prompt)
+                   ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Apps\Agents\youtube\execution\summarize_transcript.py", line 98, in _call_llm
+    raise RuntimeError("LLM call failed after all retries.")
+RuntimeError: LLM call failed after all retries.

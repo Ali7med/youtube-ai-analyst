@@ -101,6 +101,13 @@ Why this works:
 High-variance LLM steps wrapped in deterministic scripts → stable, repeatable content analysis.
 
 Operating Principles
+
+0. Read the Spec Kit First
+Before modifying the architecture, adding APIs, or creating UI components, ALWAYS read the documents inside `spec_kit/`.
+- `spec_kit/PRD.md`: For feature requests and targeting guidelines.
+- `spec_kit/SYSTEM_ARCHITECTURE.md`: For understanding how layers interact.
+- `spec_kit/API_SPEC.md`: Before adding or modifying endpoints.
+
 1. Check for tools first
 
 Before writing logic, ALWAYS check execution/ for an existing script.

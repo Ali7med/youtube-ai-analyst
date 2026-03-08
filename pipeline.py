@@ -22,6 +22,8 @@ from execution.get_transcript import get_transcript, save_to_tmp as save_transcr
 from execution.summarize_transcript import summarize_transcript, save_to_tmp as save_summary
 from execution.rate_video import rate_video, save_to_tmp as save_rate
 from execution.sheets_append import append_row_to_sheet, ensure_header_row
+import execution.db_manager as db_manager
+import execution.cache_manager as cache_manager
 
 TMP_DIR = Path(__file__).parent / ".tmp"
 LOG_FILE = TMP_DIR / "pipeline.log"
@@ -42,18 +44,31 @@ def log(msg: str, level: str = "INFO"):
 # ──────────────────────────────────────────────
 # Single video pipeline
 # ──────────────────────────────────────────────
-def process_video(video: dict, dry_run: bool = False) -> dict | None:
+def process_video(video: dict, dry_run: bool = False, search_id: int = None) -> dict | None:
     """
     Run the full analysis pipeline for a single video.
     Returns assembled row dict or None on failure.
     """
     vid_id = video["video_id"]
     title = video["title"]
+
+    cached_video = cache_manager.get_cached_video(vid_id)
+    if cached_video:
+        log(f"[cache] HIT: {vid_id}")
+        return cached_video
+
     log(f"Processing: [{vid_id}] {title[:60]}")
+    log(f"[cache] MISS: {vid_id} - Processing new...")
 
     # ── Step 1: Get transcript ───────────────────────
     try:
-        transcript = get_transcript(vid_id, fallback_description=video.get("description", ""))
+        transcript = cache_manager.get_cached_transcript(vid_id)
+        if transcript:
+            log(f"[cache] TRANSCRIPT HIT: {vid_id}")
+        else:
+            log(f"[cache] TRANSCRIPT MISS: {vid_id} - Fetching from YouTube...")
+            transcript = get_transcript(vid_id, fallback_description=video.get("description", ""))
+            cache_manager.save_transcript_cache(vid_id, transcript["text"], transcript["source"], transcript["language"], transcript["segment_count"])
         save_transcript(transcript, vid_id)
     except Exception as e:
         log(f"Transcript error for {vid_id}: {e}", "WARN")
@@ -90,13 +105,25 @@ def process_video(video: dict, dry_run: bool = False) -> dict | None:
         "link": video.get("link", f"https://www.youtube.com/watch?v={vid_id}"),
         "views": video.get("view_count", 0),
         "likes": video.get("like_count", 0),
+        "duration": video.get("duration", ""),
         "sentiment": summary.get("sentiment", "neutral"),
         "topics": ", ".join(summary.get("topics", [])),
+        "hook": summary.get("hook", ""),
+        "cta": summary.get("cta", ""),
+        "target_audience": summary.get("target_audience", ""),
+        "content_gap": summary.get("content_gap", "")
     }
 
-    log(f"  → Rate: {rate.get('rate')}/100 | Sentiment: {row['sentiment']} | Topics: {row['topics'][:40]}")
+    log(f"  → Rate: {rate.get('rate')}/100 | Duration: {row['duration']} | Sentiment: {row['sentiment']} | Topics: {row['topics'][:40]}")
 
-    # ── Step 5: Write to Google Sheets ──────────────
+    # ── Step 5: Save to Local DB ────────────────────
+    if search_id is not None:
+        try:
+            db_manager.save_video(row, search_id)
+        except Exception as e:
+            log(f"  → DB save failed: {e}", "ERROR")
+
+    # ── Step 6: Write to Google Sheets ──────────────
     if not dry_run:
         try:
             append_row_to_sheet(row)
@@ -105,6 +132,15 @@ def process_video(video: dict, dry_run: bool = False) -> dict | None:
             log(f"  → Sheets append failed: {e}", "ERROR")
     else:
         log(f"  → [DRY RUN] Skipping Sheets write.")
+
+    # ── Step 7: Telegram Notification ───────────────
+    if rate.get("rate", 0) >= 80:
+        try:
+            import execution.notify_telegram as notify_telegram
+            notify_telegram.send_viral_alert(row)
+            log(f"  → Telegram Alert Sent ✓")
+        except Exception as e:
+            log(f"  → Telegram failed: {e}", "WARN")
 
     return row
 
@@ -130,6 +166,7 @@ def run_pipeline(query: str, max_results: int = 5, order: str = "relevance", dry
     try:
         videos = search_youtube(query, max_results, order)
         save_search(videos)
+        search_id = db_manager.save_search(query, order, len(videos))
         log(f"Found {len(videos)} videos.")
     except Exception as e:
         log(f"Search failed: {e}", "ERROR")
@@ -150,7 +187,7 @@ def run_pipeline(query: str, max_results: int = 5, order: str = "relevance", dry
     results = []
     for i, video in enumerate(videos, 1):
         log(f"\n─── Video {i}/{len(videos)} ───────────────────────────")
-        row = process_video(video, dry_run=dry_run)
+        row = process_video(video, dry_run=dry_run, search_id=search_id)
         if row:
             results.append(row)
         # Respect API rate limits
@@ -169,6 +206,63 @@ def run_pipeline(query: str, max_results: int = 5, order: str = "relevance", dry
     log(f"{'=' * 60}")
 
     return results
+
+def run_pipeline_stream(query: str, max_results: int = 5, order: str = "relevance", dry_run: bool = False):
+    """
+    Generator version of run_pipeline for Server-Sent Events (SSE).
+    """
+    yield {"type": "start", "message": f"Starting pipeline for '{query}'..."}
+    try:
+        videos = search_youtube(query, max_results, order)
+        save_search(videos)
+        search_id = db_manager.save_search(query, order, len(videos))
+        yield {"type": "search", "message": f"Found {len(videos)} videos", "count": len(videos), "search_id": search_id}
+    except Exception as e:
+        yield {"type": "error", "message": f"Search failed: {e}"}
+        return
+
+    if not videos:
+        yield {"type": "complete", "processed": 0, "failed": 0, "duration_sec": 0}
+        return
+
+    if not dry_run:
+        try:
+            ensure_header_row()
+        except Exception as e:
+            pass
+
+    start_time = time.time()
+    results = []
+    failed = 0
+
+    for i, video in enumerate(videos, 1):
+        yield {"type": "processing", "index": i, "total": len(videos), "title": video["title"]}
+        
+        # Check cache
+        vid_id = video["video_id"]
+        cached_video = cache_manager.get_cached_video(vid_id)
+        if cached_video:
+            yield {"type": "cache_hit", "index": i, "title": video["title"], "message": "Loaded from cache"}
+        
+        row = process_video(video, dry_run=dry_run, search_id=search_id)
+        
+        if row:
+            results.append(row)
+            event = row.copy()
+            event["type"] = "video_done"
+            event["index"] = i
+            event["rate"] = row.get("rate", 0)
+            event["label"] = row.get("label", "Unknown")
+            yield event
+        else:
+            failed += 1
+            yield {"type": "error", "index": i, "message": f"Failed to process video: {video['title']}"}
+        
+        if i < len(videos):
+            time.sleep(1)
+
+    duration_sec = int(time.time() - start_time)
+    yield {"type": "complete", "processed": len(results), "failed": failed, "duration_sec": duration_sec}
 
 
 # ──────────────────────────────────────────────

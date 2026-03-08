@@ -15,6 +15,7 @@ load_dotenv()
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
+YOUTUBE_CHANNELS_URL = "https://www.googleapis.com/youtube/v3/channels"
 
 
 def search_youtube(query: str, max_results: int = 5, order: str = "relevance") -> list[dict]:
@@ -67,6 +68,21 @@ def search_youtube(query: str, max_results: int = 5, order: str = "relevance") -
 
     stats_by_id = {v["id"]: v for v in stats_data.get("items", [])}
 
+    # Step 2.5: Fetch channel stats
+    channel_ids = list(set([item["snippet"]["channelId"] for item in items if "channelId" in item.get("snippet", {})]))
+    channel_stats_by_id = {}
+    if channel_ids:
+        # Note: id param supports max 50 ids
+        c_params = {
+            "part": "statistics",
+            "id": ",".join(channel_ids[:50]),
+            "key": YOUTUBE_API_KEY,
+        }
+        c_resp = requests.get(YOUTUBE_CHANNELS_URL, params=c_params, timeout=15)
+        if c_resp.status_code == 200:
+            c_data = c_resp.json()
+            channel_stats_by_id = {c["id"]: c for c in c_data.get("items", [])}
+
     # Step 3: Build structured results
     results = []
     for item in items:
@@ -82,7 +98,9 @@ def search_youtube(query: str, max_results: int = 5, order: str = "relevance") -
             "video_id": vid_id,
             "title": snippet.get("title", ""),
             "description": snippet.get("description", ""),
+            "channel_id": snippet.get("channelId", ""),
             "channel_title": snippet.get("channelTitle", ""),
+            "subscriber_count": int(channel_stats_by_id.get(snippet.get("channelId", ""), {}).get("statistics", {}).get("subscriberCount", 0)),
             "published_at": snippet.get("publishedAt", ""),
             "thumbnail": snippet.get("thumbnails", {}).get("high", {}).get("url", ""),
             "link": f"https://www.youtube.com/watch?v={vid_id}",

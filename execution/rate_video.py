@@ -17,11 +17,13 @@ load_dotenv()
 # Scoring weights (must sum to 1.0)
 # ──────────────────────────────────────────────
 WEIGHTS = {
-    "engagement_ratio": 0.30,   # likes+comments / views
-    "view_velocity":    0.25,   # views per day since publish
-    "absolute_views":   0.20,   # raw view count (log scale)
-    "sentiment_bonus":  0.15,   # LLM sentiment
-    "content_depth":    0.10,   # transcript length as proxy
+    "engagement_ratio":   0.25,
+    "view_velocity":      0.20,
+    "absolute_views":     0.15,
+    "sentiment_bonus":    0.10,
+    "content_depth":      0.10,
+    "channel_authority":  0.10,
+    "recency_bonus":      0.10,
 }
 
 
@@ -82,6 +84,20 @@ def rate_video(
     if transcript.get("source") == "description":
         depth_score *= 0.5
     breakdown["content_depth"] = round(depth_score, 2)
+
+    # ── 6. Channel authority ────────────────────────
+    # 1M subs = 100
+    subscribers = video.get("subscriber_count", 0)
+    auth_score = min(subscribers / 1000000, 1.0) * 100
+    breakdown["channel_authority"] = round(auth_score, 2)
+
+    # ── 7. Recency bonus ────────────────────────────
+    # Video published within 30 days gets a boost
+    if days_since <= 30:
+        recency_score = min(max(30 - days_since, 0) / 30, 1.0) * 100
+    else:
+        recency_score = 0
+    breakdown["recency_bonus"] = round(recency_score, 2)
 
     # ── Composite score ──────────────────────────────
     rate = sum(

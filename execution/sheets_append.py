@@ -18,7 +18,7 @@ TOKEN_FILE = os.path.join(os.path.dirname(__file__), "..", "token.json")
 SHEET_NAME = os.getenv("SHEET_NAME", "Sheet1")
 
 # Column order in the Google Sheet
-COLUMNS = ["Title", "Summary", "Notes", "Thumbnail", "Rate", "Label", "Link", "Views", "Likes", "Sentiment", "Topics"]
+COLUMNS = ["Title", "Summary", "Notes", "Thumbnail", "Rate", "Label", "Link", "Views", "Likes", "Duration", "Sentiment", "Topics", "Hook", "Cta", "Target Audience", "Content Gap"]
 
 
 def append_row_to_sheet(row_data: dict, retries: int = 3) -> dict:

@@ -1,0 +1,151 @@
+<div class="glass-panel animate-in" style="padding: 24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>Past Search History</h2>
+        <button class="btn primary" onclick="loadHistory()">Refresh</button>
+    </div>
+    <div id="history-list" style="margin-top: 24px;">
+        <p style="color:var(--text-secondary)">Loading history...</p>
+    </div>
+</div>
+
+<script>
+    function timeAgo(dateString) {
+        if (!dateString) return '-';
+        // Treat SQLite timestamp as UTC
+        const utcDateStr = dateString.replace(" ", "T") + "Z";
+        const date = new Date(utcDateStr);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+
+        if (seconds < 0) return "Just now";
+
+        let interval = Math.floor(seconds / 31536000);
+        if (interval >= 1) return interval + " year" + (interval === 1 ? "" : "s") + " ago";
+
+        interval = Math.floor(seconds / 2592000);
+        if (interval >= 1) return interval + " month" + (interval === 1 ? "" : "s") + " ago";
+
+        interval = Math.floor(seconds / 86400);
+        if (interval >= 1) return interval + " day" + (interval === 1 ? "" : "s") + " ago";
+
+        interval = Math.floor(seconds / 3600);
+        if (interval >= 1) return interval + " hour" + (interval === 1 ? "" : "s") + " ago";
+
+        interval = Math.floor(seconds / 60);
+        if (interval >= 1) return interval + " min" + (interval === 1 ? "" : "s") + " ago";
+
+        return Math.floor(seconds) + " sec" + (Math.floor(seconds) === 1 ? "" : "s") + " ago";
+    }
+
+    async function loadHistory() {
+        const container = document.getElementById('history-list');
+        try {
+            const resp = await fetch('/api/history');
+            const data = await resp.json();
+            // API returns { searches: [...] }
+            const searches = data.searches || data.history || [];
+            if (!searches.length) {
+                container.innerHTML = '<div style="padding:40px; text-align:center; background:var(--bg-glass); border-radius:var(--radius-lg); border:1px dashed var(--border-color); color:var(--text-secondary);"><i class="ph ph-clock-counter-clockwise" style="font-size:48px; opacity:0.5; margin-bottom:16px; display:inline-block;"></i><br>No history found. Run your first research to see data here.</div>';
+                return;
+            }
+            container.innerHTML = `
+            <div style="overflow-x:auto;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th width="80">ID</th>
+                            <th>Topic / Query</th>
+                            <th>Sort By</th>
+                            <th>Results</th>
+                            <th>Date</th>
+                            <th width="60"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    ${searches.map(row => `
+                        <tr class="history-row" onclick="window.appRouter.navigateTo('/research?search_id=${row.id}')">
+                            <td style="color:var(--text-muted); font-family:monospace;">#${row.id}</td>
+                            <td style="font-weight:500; font-size:15px; color:var(--text-primary);"><i class="ph ph-magnifying-glass" style="color:var(--text-secondary); margin-right:8px; position:relative; top:2px;"></i>${row.query}</td>
+                            <td><span class="badge">${row.order_by || '-'}</span></td>
+                            <td><span class="badge badge-primary"><i class="ph ph-video-camera" style="margin-right:4px;"></i>${row.results_count || 0}</span></td>
+                            <td style="color:var(--text-secondary); font-size:14px;" title="${row.created_at}"><i class="ph ph-calendar-blank" style="margin-right:4px;"></i>${timeAgo(row.created_at)}</td>
+                            <td style="text-align:center; color:var(--text-muted);"><i class="ph ph-caret-right"></i></td>
+                        </tr>
+                    `).join('')}
+                    </tbody>
+                </table>
+            </div>`;
+        } catch (e) {
+            container.innerHTML = `<div style="padding:20px; background:rgba(244, 67, 54, 0.1); border:1px solid rgba(244,67,54,0.3); border-radius:var(--radius-md); color:var(--accent-danger);">Error loading history: ${e.message}</div>`;
+        }
+    }
+    loadHistory();
+</script>
+
+<style>
+    .history-table {
+        width: 100%;
+        text-align: left;
+        border-collapse: separate;
+        border-spacing: 0 12px;
+    }
+
+    .history-table th {
+        padding: 0 16px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .history-row {
+        background: var(--bg-glass);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .history-row:hover {
+        background: var(--bg-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .history-row td {
+        padding: 16px;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+
+    .history-row td:first-child {
+        border-left: 1px solid var(--border-color);
+        border-top-left-radius: var(--radius-md);
+        border-bottom-left-radius: var(--radius-md);
+    }
+
+    .history-row td:last-child {
+        border-right: 1px solid var(--border-color);
+        border-top-right-radius: var(--radius-md);
+        border-bottom-right-radius: var(--radius-md);
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        text-transform: capitalize;
+    }
+
+    .badge-primary {
+        background: rgba(144, 202, 249, 0.1);
+        color: var(--accent-primary);
+        border-color: rgba(144, 202, 249, 0.2);
+    }
+</style>

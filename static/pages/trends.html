@@ -1,0 +1,43 @@
+<div class="glass-panel animate-in" style="padding: 24px;">
+    <h2>Trend Radar</h2>
+    <p style="color:var(--text-secondary); margin-top:4px; margin-bottom:24px;">Most frequent topics from your research
+        in the last 30 days</p>
+    <div id="trends-grid" style="display:flex; flex-direction:column; gap:12px;">
+        <p style="color:var(--text-secondary)">Loading...</p>
+    </div>
+</div>
+<script>
+    async function fetchTrends() {
+        const grid = document.getElementById('trends-grid');
+        try {
+            const res = await fetch('/api/trends?days=30&limit=20');
+            const data = await res.json();
+            if (!data.trends || !data.trends.length) {
+                grid.innerHTML = '<p style="color:var(--text-secondary)">No trend data yet. Run some research first to populate trends.</p>';
+                return;
+            }
+            grid.innerHTML = data.trends.map(t => {
+                const icon = t.direction === 'up' ? 'ph-trend-up' : (t.direction === 'down' ? 'ph-trend-down' : 'ph-arrows-left-right');
+                const color = t.direction === 'up' ? 'var(--accent-success)' : (t.direction === 'down' ? 'var(--accent-danger)' : 'var(--text-secondary)');
+                const dirLabel = t.direction === 'up' ? 'Trending Up' : (t.direction === 'down' ? 'Declining' : 'Stable');
+                return `
+                <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px;">
+                    <div>
+                        <h4 style="color:var(--text-primary); margin-bottom:4px;">${t.word}</h4>
+                        <div style="font-size:12px; color:var(--text-muted);">
+                            Appeared ${t.count} time(s) · Last seen: ${t.last_seen}
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; color:${color}; font-size:14px; font-weight:600;">
+                        <i class="ph ${icon}" style="font-size:22px;"></i>
+                        <span>${dirLabel}</span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        } catch (e) {
+            grid.innerHTML = '<p style="color:red">Error: ' + e.message + '</p>';
+        }
+    }
+    fetchTrends();
+</script>

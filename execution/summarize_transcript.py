@@ -30,7 +30,11 @@ Return ONLY valid JSON with these exact keys:
   "notes": "3-5 key bullet points starting with '• '",
   "topics": ["topic1", "topic2"],
   "sentiment": "positive | neutral | negative",
-  "content_type": "tutorial | review | news | discussion | entertainment | other"
+  "content_type": "tutorial | review | news | discussion | entertainment | other",
+  "hook": "The opening hook that grabbed attention",
+  "cta": "The call to action at the end",
+  "target_audience": "1 sentence description of the target audience",
+  "content_gap": "What the video missed or should have covered"
 }
 
 IMPORTANT:
@@ -85,7 +89,10 @@ def _call_llm(user_prompt: str, retries: int = 3) -> str:
             else:
                 raise ValueError(f"Unknown LLM_PROVIDER: {LLM_PROVIDER}. Use 'openai' or 'gemini'.")
         except Exception as e:
-            print(f"[summarize] Attempt {attempt} failed: {e}")
+            err_msg = str(e)
+            if hasattr(e, 'response') and hasattr(e.response, 'text'):
+                err_msg += f" Response: {e.response.text}"
+            print(f"[summarize] Attempt {attempt} failed: {err_msg}")
             if attempt < retries:
                 time.sleep(2 ** attempt)
     raise RuntimeError("LLM call failed after all retries.")
@@ -103,7 +110,7 @@ def _call_openai(user_prompt: str) -> str:
             {"role": "user", "content": user_prompt},
         ],
         "temperature": 0.3,
-        "max_tokens": 800,
+        "max_tokens": 2500,
     }
     resp = requests.post(f"{openai_base}/chat/completions", headers=headers, json=payload, timeout=30)
     resp.raise_for_status()
@@ -114,11 +121,12 @@ def _call_gemini(user_prompt: str) -> str:
     """Call Google Gemini API."""
     import requests
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{LLM_MODEL}:generateContent?key={LLM_API_KEY}"
+    headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [{"parts": [{"text": SYSTEM_PROMPT + "\n\n" + user_prompt}]}],
-        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 800},
+        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2500},
     }
-    resp = requests.post(url, json=payload, timeout=30)
+    resp = requests.post(url, headers=headers, json=payload, timeout=30)
     resp.raise_for_status()
     candidates = resp.json().get("candidates", [])
     if not candidates:
@@ -166,6 +174,10 @@ def _empty_result(reason: str) -> dict:
         "topics": [],
         "sentiment": "neutral",
         "content_type": "other",
+        "hook": "",
+        "cta": "",
+        "target_audience": "",
+        "content_gap": "",
         "_error": reason,
     }
 

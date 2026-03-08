@@ -1,0 +1,59 @@
+<div class="dashboard-wrapper animate-in">
+    <div class="stats-grid">
+        <div class="card stat-card">
+            <i class="icon ph-fill ph-video-camera"></i>
+            <div class="value" id="stat-total">...</div>
+            <div class="label">Total Videos Analyzed</div>
+        </div>
+        <div class="card stat-card">
+            <i class="icon ph-fill ph-target"></i>
+            <div class="value" id="stat-avg">...</div>
+            <div class="label">Average Rate Score</div>
+        </div>
+        <div class="card stat-card">
+            <i class="icon ph-fill ph-smiley"></i>
+            <div class="value" id="stat-sent" style="color: var(--accent-success)">...</div>
+            <div class="label">Positive Sentiment</div>
+        </div>
+        <div class="card stat-card">
+            <i class="icon ph-fill ph-trend-up"></i>
+            <div class="value" id="stat-trends">-</div>
+            <div class="label">Active Trends Tracker</div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="dashboard-grid">
+        <div class="card chart-panel">
+            <h3>Score Distribution</h3>
+            <div class="chart-container">
+                <canvas id="scoreChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card chart-panel">
+            <h3>Sentiment Analysis</h3>
+            <div class="chart-container" style="height: 250px;">
+                <canvas id="sentimentChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="dashboard-grid" style="margin-top:24px;">
+        <div class="card chart-panel">
+            <h3>Rate Trend Over Time</h3>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card list-panel" style="overflow-y:auto; max-height:400px;">
+            <h3>Top Performing Videos</h3>
+            <div class="top-list" id="top-videos-list"
+                style="display:flex; flex-direction:column; gap:16px; margin-top:16px;">
+                <p class="text-secondary">Fetching data from DB...</p>
+            </div>
+        </div>
+    </div>
+</div>

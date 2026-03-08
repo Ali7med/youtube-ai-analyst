@@ -5,6 +5,7 @@ An AI-powered content research pipeline that searches YouTube, extracts transcri
 ## Architecture (3-Layer)
 
 ```
+spec_kit/               ← Project specifications (PRD, Architecture, API APIs)
 Layer 1: directives/      ← SOPs (Markdown instructions)
 Layer 2: pipeline.py      ← Orchestration (central brain)
 Layer 3: execution/       ← Deterministic Python scripts
