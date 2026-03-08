@@ -88,6 +88,78 @@ def get_all_videos(limit=100, offset=0):
         cursor.execute("SELECT * FROM videos ORDER BY processed_at DESC LIMIT ? OFFSET ?", (limit, offset))
         return [dict(row) for row in cursor.fetchall()]
 
+def get_jobs(limit=100):
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM jobs ORDER BY next_run ASC LIMIT ?", (limit,))
+        return [dict(row) for row in cursor.fetchall()]
+
+def add_job(name: str, query: str, schedule: str, max_results: int = 10, notify: bool = True):
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        # Initial next_run depends on logic, for now set to CURRENT_TIMESTAMP or calculate in python
+        cursor.execute(
+            "INSERT INTO jobs (name, query, schedule, max_results, notify_telegram, next_run) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))",
+            (name, query, schedule, max_results, 1 if notify else 0)
+        )
+        conn.commit()
+        return cursor.lastrowid
+
+def delete_job(job_id: int):
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
+        conn.commit()
+
+def update_job_run(job_id: int, next_run_str: str):
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE jobs SET last_run = datetime('now', 'localtime'), next_run = ? WHERE id = ?", (next_run_str, job_id))
+        conn.commit()
+
+def update_job_status(job_id: int, status: str):
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE jobs SET status = ? WHERE id = ?", (status, job_id))
+        conn.commit()
+
+def get_watchlist():
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM watchlist ORDER BY created_at DESC")
+        return [dict(row) for row in cursor.fetchall()]
+
+def add_to_watchlist(type: str, target: str, name: str):
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO watchlist (type, target, name) VALUES (?, ?, ?)",
+            (type, target, name)
+        )
+        conn.commit()
+        return cursor.lastrowid
+
+def delete_from_watchlist(item_id: int):
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM watchlist WHERE id = ?", (item_id,))
+        conn.commit()
+
+def update_watchlist_checked(item_id: int):
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE watchlist SET last_checked = datetime('now', 'localtime') WHERE id = ?", (item_id,))
+        conn.commit()
+
 if __name__ == "__main__":
     init_db()
     print("Database initialized.")

@@ -187,6 +187,72 @@ def analyze_competitors():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/jobs", methods=["GET"])
+def get_jobs_api():
+    try:
+        jobs = db_manager.get_jobs()
+        return jsonify({"jobs": jobs})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/jobs", methods=["POST"])
+def add_job_api():
+    data = request.json
+    name = data.get("name", "Auto Job")
+    query = data.get("query", "")
+    schedule = data.get("schedule", "daily")
+    max_results = int(data.get("max_results", 10))
+    notify = bool(data.get("notify_telegram", True))
+    
+    if not query:
+        return jsonify({"error": "Query required"}), 400
+        
+    try:
+        job_id = db_manager.add_job(name, query, schedule, max_results, notify)
+        return jsonify({"status": "success", "job_id": job_id})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/jobs/<int:job_id>", methods=["DELETE"])
+def delete_job_api(job_id):
+    try:
+        db_manager.delete_job(job_id)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/watchlist", methods=["GET"])
+def get_watchlist_api():
+    try:
+        items = db_manager.get_watchlist()
+        return jsonify({"watchlist": items})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/watchlist", methods=["POST"])
+def add_watchlist_api():
+    data = request.json
+    type = data.get("type", "keyword")
+    target = data.get("target", "")
+    name = data.get("name", "")
+    
+    if not target or not name:
+        return jsonify({"error": "Target and name required"}), 400
+        
+    try:
+        item_id = db_manager.add_to_watchlist(type, target, name)
+        return jsonify({"status": "success", "id": item_id})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/watchlist/<int:item_id>", methods=["DELETE"])
+def delete_watchlist_api(item_id):
+    try:
+        db_manager.delete_from_watchlist(item_id)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.errorhandler(404)
 def not_found(e):
     if request.path.startswith("/api/"):
@@ -194,4 +260,6 @@ def not_found(e):
     return send_from_directory('static', 'index.html')
 
 if __name__ == "__main__":
+    import execution.scheduler as scheduler
+    scheduler.start_scheduler()
     app.run(debug=True, port=5000)
