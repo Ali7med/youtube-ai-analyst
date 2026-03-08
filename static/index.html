@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ YouTube AI Researcher</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="overlay" id="loading-overlay">
+        <div class="loader">
+            <svg viewBox="25 25 50 50">
+              <circle r="20" cy="50" cx="50"></circle>
+            </svg>
+            <p>🤖 Analyzing Videos via LLM... (This might take a minute)</p>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <span class="icon">⚡</span>
+            <h1>YouTube AI Research</h1>
+        </div>
+        <div class="nav-links">
+            <button id="tab-search" class="active">Search</button>
+            <button id="tab-settings">Settings</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Settings Section -->
+        <section id="section-settings" class="glass-panel hidden">
+            <div class="header">
+                <h2>API Configurations</h2>
+                <p>Configure your access keys for YouTube and LLM providers.</p>
+            </div>
+            
+            <form id="config-form" class="animate-in">
+                <div class="input-group">
+                    <label>YouTube Data API Key</label>
+                    <input type="password" id="YOUTUBE_API_KEY" placeholder="AIzaSy...">
+                </div>
+                
+                <div class="input-group">
+                    <label>LLM Provider</label>
+                    <select id="LLM_PROVIDER">
+                        <option value="gemini">Google Gemini</option>
+                        <option value="openai">OpenAI</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>LLM Model</label>
+                    <input type="text" id="LLM_MODEL" placeholder="gemini-2.0-flash">
+                </div>
+
+                <div class="input-group">
+                    <label>LLM API Key</label>
+                    <input type="password" id="LLM_API_KEY" placeholder="Your API Key...">
+                </div>
+
+                <div class="input-group">
+                    <label>Google Sheet ID (Delivery)</label>
+                    <input type="text" id="GOOGLE_SHEET_ID" placeholder="1BxiMVs0XRYFa...">
+                </div>
+
+                <button type="submit" class="btn primary">Save Configuration</button>
+                <div id="save-msg" class="success-msg">Configurations saved successfully!</div>
+            </form>
+        </section>
+
+        <!-- Search & Results Section -->
+        <section id="section-search" class="active">
+            <div class="search-box glass-panel animate-in">
+                <h2>New Research Topic</h2>
+                <form id="search-form">
+                    <div class="query-wrapper">
+                        <input type="text" id="query" placeholder="e.g. Complete Python ML Roadmap 2024" required>
+                        <button type="submit" class="btn primary pulse">Analyze Now</button>
+                    </div>
+                    <div class="filters">
+                        <div class="input-group small">
+                            <label>Videos Count</label>
+                            <input type="number" id="max_results" value="5" min="1" max="15">
+                        </div>
+                        <div class="input-group small">
+                            <label>Sort By</label>
+                            <select id="order">
+                                <option value="relevance">Relevance</option>
+                                <option value="viewCount">Most Viewed</option>
+                                <option value="date">Newest</option>
+                            </select>
+                        </div>
+                        <div class="input-group toggle">
+                            <label>
+                                <input type="checkbox" id="dry_run">
+                                <span class="slider"></span>
+                                Dry Run (Skip Sheets)
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="results-container" class="hidden">
+                <!-- Results will be injected here -->
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
