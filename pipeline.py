@@ -96,6 +96,7 @@ def process_video(video: dict, dry_run: bool = False, search_id: int = None) -> 
 
     # ── Step 4: Build deliverable row ───────────────
     row = {
+        "video_id": vid_id,
         "title": title,
         "summary": summary.get("summary", ""),
         "notes": summary.get("notes", ""),
@@ -105,13 +106,15 @@ def process_video(video: dict, dry_run: bool = False, search_id: int = None) -> 
         "link": video.get("link", f"https://www.youtube.com/watch?v={vid_id}"),
         "views": video.get("view_count", 0),
         "likes": video.get("like_count", 0),
+        "comments": video.get("comment_count", 0),
         "duration": video.get("duration", ""),
         "sentiment": summary.get("sentiment", "neutral"),
         "topics": ", ".join(summary.get("topics", [])) if isinstance(summary.get("topics", []), list) else str(summary.get("topics", "")),
         "hook": summary.get("hook", ""),
         "cta": summary.get("cta", ""),
         "target_audience": summary.get("target_audience", ""),
-        "content_gap": summary.get("content_gap", "")
+        "content_gap": summary.get("content_gap", ""),
+        "response_language": summary.get("response_language", "unknown"),
     }
 
     log(f"  → Rate: {rate.get('rate')}/100 | Duration: {row['duration']} | Sentiment: {row['sentiment']} | Topics: {row['topics'][:40]}")

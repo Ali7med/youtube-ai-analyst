@@ -4,6 +4,7 @@ from datetime import datetime
 
 DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'database', 'youtube_research.db')
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), '..', 'database', 'schema.sql')
+_db_initialized = False
 
 def get_connection():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
@@ -12,12 +13,16 @@ def get_connection():
     return conn
 
 def init_db():
+    global _db_initialized
+    if _db_initialized:
+        return
     if not os.path.exists(SCHEMA_PATH):
         return
     with get_connection() as conn:
         with open(SCHEMA_PATH, 'r', encoding='utf-8') as f:
             conn.executescript(f.read())
         conn.commit()
+    _db_initialized = True
 
 def save_search(query: str, order_by: str, results_count: int) -> int:
     init_db()

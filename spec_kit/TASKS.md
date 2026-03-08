@@ -515,7 +515,7 @@ def compare_channels(channel_ids: list) -> dict:
 ### TASK-15 · نظام Jobs المجدول
 **الأولوية**: 🟡 Medium  
 **الحجم**: L  
-**الحالة**: `[ ] Todo`
+**الحالة**: `[x] Done`
 
 #### الملفات المطلوبة
 | الإجراء | الملف |
@@ -526,10 +526,10 @@ def compare_channels(channel_ids: list) -> dict:
 | تعديل | `app.py` — تشغيل APScheduler عند بدء Flask |
 
 #### معايير القبول
-- [ ] يمكن إنشاء job مجدول من الـ UI
-- [ ] يدعم: `daily_HH:MM`, `weekly_DAY_HH:MM`, `monthly_DD_HH:MM`
-- [ ] يُسجّل `last_run` و `next_run` في قاعدة البيانات
-- [ ] يعمل كـ background thread مع Flask بدون process منفصل
+- [x] يمكن إنشاء job مجدول من الـ UI
+- [x] يدعم: `daily`, `weekly`, `monthly`, `hourly`
+- [x] يُسجّل `last_run` و `next_run` في قاعدة البيانات
+- [x] يعمل كـ background thread مع Flask بدون process منفصل
 
 #### التبعيات
 - TASK-01 (قاعدة البيانات)

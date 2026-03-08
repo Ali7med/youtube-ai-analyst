@@ -115,6 +115,76 @@ def search_youtube(query: str, max_results: int = 5, order: str = "relevance") -
     return results
 
 
+def search_by_channel_id(channel_id: str, max_results: int = 5) -> list[dict]:
+    """
+    Fetch the latest videos from a specific YouTube channel by channelId.
+    This is the correct method for Watchlist channel monitoring.
+    """
+    if not YOUTUBE_API_KEY:
+        raise EnvironmentError("YOUTUBE_API_KEY is not set in .env")
+
+    search_params = {
+        "part": "snippet",
+        "channelId": channel_id,
+        "maxResults": max_results,
+        "type": "video",
+        "order": "date",
+        "key": YOUTUBE_API_KEY,
+    }
+
+    print(f"[search_youtube] Fetching latest videos from channel: {channel_id}")
+    search_resp = requests.get(YOUTUBE_SEARCH_URL, params=search_params, timeout=15)
+    search_resp.raise_for_status()
+    search_data = search_resp.json()
+
+    items = search_data.get("items", [])
+    if not items:
+        print(f"[search_youtube] No videos found for channel: {channel_id}")
+        return []
+
+    # Reuse the full pipeline by passing results to search_youtube format
+    video_ids = [item["id"]["videoId"] for item in items if "videoId" in item.get("id", {})]
+
+    stats_params = {
+        "part": "statistics,contentDetails,snippet",
+        "id": ",".join(video_ids),
+        "key": YOUTUBE_API_KEY,
+    }
+    stats_resp = requests.get(YOUTUBE_VIDEOS_URL, params=stats_params, timeout=15)
+    stats_resp.raise_for_status()
+    stats_by_id = {v["id"]: v for v in stats_resp.json().get("items", [])}
+
+    results = []
+    for item in items:
+        vid_id = item.get("id", {}).get("videoId")
+        if not vid_id:
+            continue
+        snippet = item.get("snippet", {})
+        stats_item = stats_by_id.get(vid_id, {})
+        stats = stats_item.get("statistics", {})
+        content_details = stats_item.get("contentDetails", {})
+
+        video = {
+            "video_id": vid_id,
+            "title": snippet.get("title", ""),
+            "description": snippet.get("description", ""),
+            "channel_id": snippet.get("channelId", ""),
+            "channel_title": snippet.get("channelTitle", ""),
+            "subscriber_count": 0,
+            "published_at": snippet.get("publishedAt", ""),
+            "thumbnail": snippet.get("thumbnails", {}).get("high", {}).get("url", ""),
+            "link": f"https://www.youtube.com/watch?v={vid_id}",
+            "view_count": int(stats.get("viewCount", 0)),
+            "like_count": int(stats.get("likeCount", 0)),
+            "comment_count": int(stats.get("commentCount", 0)),
+            "duration": content_details.get("duration", ""),
+        }
+        results.append(video)
+        print(f"  [✓] {video['title'][:60]} | views={video['view_count']:,}")
+
+    return results
+
+
 def save_to_tmp(data: list, filename: str = "search_results.json"):
     """Save search results to .tmp/ for downstream scripts."""
     tmp_dir = os.path.join(os.path.dirname(__file__), "..", ".tmp")
