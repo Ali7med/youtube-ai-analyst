@@ -45,23 +45,39 @@ def find_content_gaps(my_channel_id: str, competitor_ids: list[str]) -> list:
 
 def compare_channels(my_channel_id: str, competitor_ids: list[str]) -> dict:
     """مقارنة شاملة: stats, avg_rate, top_topics لكل قناة"""
-    channels_to_fetch = [my_channel_id] + competitor_ids
     
     # Simple db lookup for basic comparison
     db_manager.init_db()
     all_channels_data = {}
+    
+    actual_my_channel_id = my_channel_id
+    actual_competitor_ids = []
+
+    def get_actual_id(cid):
+        with db_manager.get_connection() as conn:
+            cursor = conn.cursor()
+            # Try to see if it exists directly by ID first
+            cursor.execute("SELECT channel_id FROM channels WHERE channel_id = ?", (cid,))
+            if cursor.fetchone():
+                return cid
+            
+        # Try to analyze and get actual ID
+        res = analyze_channel.analyze_channel(cid)
+        if "error" not in res and "stats" in res:
+            return res["stats"]["channel_id"]
+        return cid # fallback
+
+    actual_my_channel_id = get_actual_id(my_channel_id)
+    for cid in competitor_ids:
+        actual_competitor_ids.append(get_actual_id(cid))
+
+    channels_to_fetch = [actual_my_channel_id] + actual_competitor_ids
     
     with db_manager.get_connection() as conn:
         cursor = conn.cursor()
         for cid in channels_to_fetch:
             cursor.execute("SELECT * FROM channels WHERE channel_id = ?", (cid,))
             c_row = cursor.fetchone()
-            if not c_row:
-                # Need to try analyzing it
-                res = analyze_channel.analyze_channel(cid)
-                if "error" not in res:
-                    cursor.execute("SELECT * FROM channels WHERE channel_id = ?", (cid,))
-                    c_row = cursor.fetchone()
             
             if c_row:
                 # Fetch their avg rate of videos in DB
@@ -75,7 +91,7 @@ def compare_channels(my_channel_id: str, competitor_ids: list[str]) -> dict:
                     "avg_video_rate": round(v_row["avg_rate"] or 0, 2)
                 }
 
-    gaps = find_content_gaps(my_channel_id, competitor_ids)
+    gaps = find_content_gaps(actual_my_channel_id, actual_competitor_ids)
 
     return {
         "status": "success",

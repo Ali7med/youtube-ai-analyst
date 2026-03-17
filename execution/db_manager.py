@@ -76,7 +76,17 @@ def get_history(limit=50, offset=0):
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT * FROM searches ORDER BY created_at DESC LIMIT ? OFFSET ?", (limit, offset)
+            """
+            SELECT 
+                s.*,
+                COUNT(v.id) AS actual_count
+            FROM searches s
+            LEFT JOIN videos v ON v.search_id = s.id
+            GROUP BY s.id
+            ORDER BY s.created_at DESC
+            LIMIT ? OFFSET ?
+            """,
+            (limit, offset)
         )
         return [dict(row) for row in cursor.fetchall()]
 

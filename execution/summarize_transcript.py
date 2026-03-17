@@ -59,7 +59,10 @@ def summarize_transcript(transcript: str, title: str = "", max_chars: int = 1200
     Returns:
         dict with summary, notes, topics, sentiment, content_type
     """
-    if not LLM_API_KEY:
+    # Ollama doesn't need a real API key — skip check if using local endpoint
+    openai_base = os.getenv("OPENAI_BASE_URL", "")
+    is_local = openai_base.startswith("http://localhost") or openai_base.startswith("http://127.0.0.1")
+    if not LLM_API_KEY and not is_local:
         raise EnvironmentError("LLM_API_KEY is not set in .env")
 
     if not transcript.strip():
@@ -89,8 +92,10 @@ def _call_llm(user_prompt: str, retries: int = 3) -> str:
                 return _call_openai(user_prompt)
             elif LLM_PROVIDER == "gemini":
                 return _call_gemini(user_prompt)
+            elif LLM_PROVIDER == "ollama":
+                return _call_ollama(user_prompt)
             else:
-                raise ValueError(f"Unknown LLM_PROVIDER: {LLM_PROVIDER}. Use 'openai' or 'gemini'.")
+                raise ValueError(f"Unknown LLM_PROVIDER: {LLM_PROVIDER}. Use 'gemini', 'openai', or 'ollama'.")
         except Exception as e:
             err_msg = str(e)
             if hasattr(e, 'response') and hasattr(e.response, 'text'):
@@ -105,7 +110,8 @@ def _call_openai(user_prompt: str) -> str:
     """Call OpenAI-compatible API."""
     import requests
     openai_base = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-    headers = {"Authorization": f"Bearer {LLM_API_KEY}", "Content-Type": "application/json"}
+    api_key = LLM_API_KEY or "sk-placeholder"
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     payload = {
         "model": LLM_MODEL,
         "messages": [
@@ -116,6 +122,25 @@ def _call_openai(user_prompt: str) -> str:
         "max_tokens": 2500,
     }
     resp = requests.post(f"{openai_base}/chat/completions", headers=headers, json=payload, timeout=30)
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"]
+
+
+def _call_ollama(user_prompt: str) -> str:
+    """Call local Ollama API (OpenAI-compatible at localhost:11434)."""
+    import requests
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "model": LLM_MODEL,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        "temperature": 0.3,
+        "stream": False,
+    }
+    resp = requests.post(f"{base_url}/chat/completions", headers=headers, json=payload, timeout=120)
     resp.raise_for_status()
     return resp.json()["choices"][0]["message"]["content"]
 

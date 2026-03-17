@@ -1,5 +1,212 @@
 <div class="glass-panel animate-in" style="padding: 24px;">
-    <h2>Competitor Analysis</h2>
-    <p class="text-secondary">Feature interface coming soon. The backend logic is ready for /api/competitors/analyze.
-    </p>
+    <div
+        style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px;">
+        <div style="display:flex; align-items:center; gap: 16px;">
+            <div
+                style="background:var(--accent-warning); width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:24px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+                <i class="ph ph-users-three"></i>
+            </div>
+            <div>
+                <h1 style="font-size:24px; font-weight:700; margin:0; color:var(--text-primary);">Competitor Analysis
+                </h1>
+                <p class="text-secondary" style="margin:4px 0 0 0; font-size:14px;">Compare channels and find content
+                    gaps</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inputs -->
+    <div
+        style="background:var(--bg-card); border:1px solid var(--border-color); padding: 24px; border-radius: 16px; margin-bottom: 32px;">
+        <form id="competitor-form" style="display:flex; flex-direction:column; gap: 16px;">
+            <div class="input-group">
+                <label style="font-size:13px; font-weight:600; color:var(--text-secondary);">Your Channel (URL or
+                    @Handle)</label>
+                <input type="text" id="my-channel" required placeholder="e.g. @MrBeast"
+                    style="border-radius:8px; padding:10px 14px; background:var(--bg-glass);">
+            </div>
+
+            <div class="input-group">
+                <label style="font-size:13px; font-weight:600; color:var(--text-secondary);">Competitor Channels (Comma
+                    separated URLs or @Handles)</label>
+                <input type="text" id="comp-channels" required placeholder="e.g. @PewDiePie, @MKBHD"
+                    style="border-radius:8px; padding:10px 14px; background:var(--bg-glass);">
+            </div>
+
+            <button type="submit" class="btn primary" style="align-self: flex-start; margin-top: 8px;">
+                <i class="ph ph-magnifying-glass"></i> Analyze Competitors
+            </button>
+        </form>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" style="display:none; text-align:center; padding:40px; color:var(--text-secondary);">
+        <i class="ph ph-spinner ph-spin"
+            style="font-size:32px; color:var(--accent-primary); margin-bottom:12px; display:inline-block;"></i>
+        <p>Analyzing channels and finding content gaps... This may take a minute.</p>
+    </div>
+
+    <!-- Results -->
+    <div id="results" style="display:none;">
+
+        <!-- Channels Comparison -->
+        <h3 style="margin-bottom: 16px; font-size: 18px; display:flex; align-items:center; gap:8px;">
+            <i class="ph ph-chart-bar" style="color:var(--accent-primary);"></i> Channels Overview
+        </h3>
+        <div id="channels-grid"
+            style="display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin-bottom: 40px;">
+            <!-- Channels populate here -->
+        </div>
+
+        <!-- Content Gaps -->
+        <h3 style="margin-bottom: 16px; font-size: 18px; display:flex; align-items:center; gap:8px;">
+            <i class="ph ph-lightbulb" style="color:var(--accent-success);"></i> Top Content Gaps
+        </h3>
+        <p style="color:var(--text-secondary); margin-top:-10px; margin-bottom: 20px; font-size: 13px;">Topics covered
+            successfully by your competitors, but not directly by you.</p>
+
+        <div
+            style="overflow-x:auto; background:var(--bg-card); border-radius:16px; border:1px solid var(--border-color);">
+            <table class="history-table" style="margin:0; width:100%;">
+                <thead>
+                    <tr>
+                        <th style="padding:16px 20px;">Topic Opportunity</th>
+                        <th>Competitor Videos</th>
+                        <th>Avg Rate (Score)</th>
+                        <th>Estimated Avg Views</th>
+                    </tr>
+                </thead>
+                <tbody id="gaps-list">
+                    <!-- Gaps populate here -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
 </div>
+
+<script>
+    document.getElementById('competitor-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const myChannelInfo = document.getElementById('my-channel').value.trim();
+        const competitorsInfo = document.getElementById('comp-channels').value.split(',').map(s => s.trim()).filter(s => s);
+
+        if (!myChannelInfo || competitorsInfo.length === 0) return;
+
+        const btn = e.target.querySelector('button');
+        const ogText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Analyzing...';
+        btn.disabled = true;
+
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('results').style.display = 'none';
+
+        try {
+            const res = await fetch('/api/competitors/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    my_channel_id: myChannelInfo,
+                    competitor_ids: competitorsInfo
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || "Analysis failed");
+
+            renderResults(data, myChannelInfo);
+
+        } catch (err) {
+            alert("Error: " + err.message);
+        } finally {
+            btn.innerHTML = ogText;
+            btn.disabled = false;
+            document.getElementById('loading').style.display = 'none';
+        }
+    });
+
+    function formatNumber(num) {
+        if (!num) return '0';
+        return new Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(num);
+    }
+
+    function renderResults(data, myChannelQuery) {
+        document.getElementById('results').style.display = 'block';
+
+        const channels = data.channels || {};
+        const gaps = data.content_gaps || [];
+
+        // Pick out the "my channel" to highlight it
+        // Note: The backend returns them mapped by DB channel ID. 
+        // We will just distinguish by finding which one is the first returned (the backend usually puts my_channel first, but it's a dict)
+        // Let's just render all channels.
+
+        let channelsHtml = '';
+        for (const [id, info] of Object.entries(channels)) {
+            let scoreColor = info.avg_video_rate >= 80 ? 'var(--accent-success)' : info.avg_video_rate >= 50 ? 'var(--accent-primary)' : 'var(--accent-warning)';
+            channelsHtml += \`
+                <div class="glass-panel" style="padding:16px; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div style="width:40px; height:40px; border-radius:50%; background:var(--bg-primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="ph ph-youtube-logo" style="color:#ff0000; font-size:20px;"></i>
+                        </div>
+                        <div>
+                            <h4 style="margin:0; font-size:15px; color:var(--text-primary);">\${info.name}</h4>
+                            <p style="margin:0; font-size:12px; color:var(--text-secondary); font-family:var(--font-mono);">\${id}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; background:rgba(255,255,255,0.02); padding:10px; border-radius:8px;">
+                        <div>
+                            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Subscribers</div>
+                            <div style="font-size:14px; font-weight:600; color:var(--text-primary);">\${formatNumber(info.subscribers)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Total Views</div>
+                            <div style="font-size:14px; font-weight:600; color:var(--text-primary);">\${formatNumber(info.total_views)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Analyzed Videos</div>
+                            <div style="font-size:14px; font-weight:600; color:var(--text-primary);">\${info.db_videos_count}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Avg Score</div>
+                            <div style="font-size:14px; font-weight:600; color:\${scoreColor};">\${info.avg_video_rate}</div>
+                        </div>
+                    </div>
+                </div>
+            \`;
+        }
+        document.getElementById('channels-grid').innerHTML = channelsHtml || '<p style="color:var(--text-secondary);">No channels found.</p>';
+
+        // Render Gaps
+        let gapsHtml = '';
+        if (gaps.length === 0) {
+            gapsHtml = '<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-secondary);">No specific content gaps found.</td></tr>';
+        } else {
+            gapsHtml = gaps.map(g => {
+                return \`
+                    <tr class="history-row" style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding:16px 20px;">
+                            <span style="font-weight:600; color:var(--accent-primary); font-size:15px;"># \${g.topic}</span>
+                        </td>
+                        <td>
+                            <span style="background:rgba(255,255,255,0.05); padding:4px 10px; border-radius:6px; font-size:13px; font-weight:600;">
+                                \${g.competitor_videos_count} videos
+                            </span>
+                        </td>
+                        <td>
+                            <strong style="color:var(--accent-success); font-size:15px;">\${g.avg_rate}</strong>
+                        </td>
+                        <td>
+                            <span style="color:var(--text-primary); font-family:var(--font-mono);">\${formatNumber(g.est_views)} views</span>
+                        </td>
+                    </tr>
+                \`;
+            }).join('');
+        }
+        document.getElementById('gaps-list').innerHTML = gapsHtml;
+    }
+</script>

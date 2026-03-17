@@ -67,7 +67,7 @@
                             <td style="color:var(--text-muted); font-family:monospace;">#${row.id}</td>
                             <td style="font-weight:500; font-size:15px; color:var(--text-primary);"><i class="ph ph-magnifying-glass" style="color:var(--text-secondary); margin-right:8px; position:relative; top:2px;"></i>${row.query}</td>
                             <td><span class="badge">${row.order_by || '-'}</span></td>
-                            <td><span class="badge badge-primary"><i class="ph ph-video-camera" style="margin-right:4px;"></i>${row.results_count || 0}</span></td>
+                            <td><span class="badge badge-primary"><i class="ph ph-video-camera" style="margin-right:4px;"></i>${row.actual_count ?? row.results_count ?? 0} <span style="font-size:10px; opacity:0.7;" title="Videos found in YouTube search"> / ${row.results_count || 0}</span></span></td>
                             <td style="color:var(--text-secondary); font-size:14px;" title="${row.created_at}"><i class="ph ph-calendar-blank" style="margin-right:4px;"></i>${timeAgo(row.created_at)}</td>
                             <td style="text-align:center; color:var(--text-muted);"><i class="ph ph-caret-right"></i></td>
                         </tr>

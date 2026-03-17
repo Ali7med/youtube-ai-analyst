@@ -221,6 +221,19 @@ def delete_job_api(job_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/jobs/<int:job_id>/status", methods=["PATCH"])
+def update_job_status_api(job_id):
+    data = request.json
+    new_status = data.get("status", "active")
+    allowed = ["active", "paused", "error"]
+    if new_status not in allowed:
+        return jsonify({"error": f"Invalid status. Must be one of: {allowed}"}), 400
+    try:
+        db_manager.update_job_status(job_id, new_status)
+        return jsonify({"status": "updated", "new_status": new_status})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/watchlist", methods=["GET"])
 def get_watchlist_api():
     try:

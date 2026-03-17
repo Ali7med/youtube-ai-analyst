@@ -6,7 +6,23 @@ const createVideoCard = (video) => {
     // Formatting numbers
     const formatNum = (num) => num ? new Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(num) : '0';
 
+    // Format duration from ISO 8601 (PT9M2S) to human readable (09:02)
+    const formatDuration = (pt) => {
+        if (!pt || !pt.startsWith('PT')) return pt || '0:00';
+        const m = pt.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+        if (!m) return pt;
+        const h = parseInt(m[1] || 0), min = parseInt(m[2] || 0), s = parseInt(m[3] || 0);
+        return h > 0 ? `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${String(min).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+
+    // Language flag emoji map
+    const langFlag = (code) => {
+        const flags = { 'ar': '🇸🇦', 'en': '🇬🇧', 'fr': '🇫🇷', 'de': '🇩🇪', 'es': '🇪🇸', 'pt': '🇧🇷', 'ru': '🇷🇺', 'zh': '🇨🇳', 'ja': '🇯🇵', 'ko': '🇰🇷', 'tr': '🇹🇷', 'it': '🇮🇹' };
+        return flags[code] || '🌐';
+    };
+
     const videoUrl = video.link || `https://www.youtube.com/watch?v=${video.video_id}`;
+    const lang = video.response_language && video.response_language !== 'unknown' ? video.response_language : null;
 
     return `
     <div class="card" style="display:flex; flex-direction:column; gap:16px; padding:20px;">
@@ -16,7 +32,7 @@ const createVideoCard = (video) => {
             <a href="${videoUrl}" target="_blank" style="position:relative; width:160px; height:90px; border-radius:8px; overflow:hidden; flex-shrink:0; display:block;">
                 <img src="${video.thumbnail || ''}" alt="Thumbnail" style="width:100%; height:100%; object-fit:cover; background:#1a1a2e; transition:0.3s; transform-origin:center;" onmouseover="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
                 <div style="position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.8); padding:2px 6px; border-radius:4px; font-size:11px; font-weight:600; color:#fff;">
-                    ${video.duration || '0:00'}
+                    ${formatDuration(video.duration)}
                 </div>
                 <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(239,68,68,0.9); color:white; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; opacity:0; transition:0.2s;" onmouseover="this.style.opacity='1'" onmouseleave="this.style.opacity='0'">
                     <i class="ph-fill ph-play" style="font-size:16px;"></i>
@@ -39,6 +55,7 @@ const createVideoCard = (video) => {
                     <span style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); padding:4px 8px; border-radius:4px; font-size:11px; color:${sentimentColor}; display:flex; align-items:center; gap:4px;">
                         <i class="ph ${sentimentIcon}"></i> ${video.sentiment || 'neutral'}
                     </span>
+                    ${lang ? `<span title="Content Language" style="background:rgba(99,102,241,0.08); border:1px solid var(--border-color); padding:4px 8px; border-radius:4px; font-size:11px; color:var(--text-secondary); display:flex; align-items:center; gap:4px;">${langFlag(lang)} ${lang.toUpperCase()}</span>` : ''}
                     ${video.topics ? video.topics.split(',').slice(0, 2).map(t => `<span style="background:rgba(99,102,241,0.1); color:var(--accent-primary); padding:4px 8px; border-radius:4px; font-size:11px;">#${t.trim()}</span>`).join('') : ''}
                 </div>
             </div>
